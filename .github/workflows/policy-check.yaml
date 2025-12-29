@@ -16,9 +16,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      # 2. Install Terraform (The Builder)
+# 2. Install Terraform (The Builder)
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
 
       # 3. Install Google Cloud SDK (The Inspector)
       - name: Setup Google Cloud SDK
@@ -27,9 +29,11 @@ jobs:
           install_components: 'beta,terraform-tools'
 
       # 4. Run the Checks
-      - name: Run Inspector
-        run: |
-          terraform init
-          terraform plan -out=test.tfplan
-          terraform show -json test.tfplan > test.json
-          gcloud beta terraform vet test.json --policy-library=.
+            - name: Run Inspector
+              run: |
+                terraform init
+                terraform plan -out=test.tfplan
+                terraform show -json test.tfplan > test.json
+                echo "--- DEBUG: CONTENT OF test.json ---"
+                head -n 5 test.json     # This will show us the first 5 lines
+                gcloud beta terraform vet test.json --policy-library=.
