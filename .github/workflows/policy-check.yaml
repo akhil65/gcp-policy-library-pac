@@ -1,0 +1,29 @@
+name: Policy-as-Code Check
+
+on: [push, pull_request]
+
+jobs:
+  vet_code:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Download your code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 2. Install Terraform (The Builder)
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      # 3. Install Google Cloud SDK (The Inspector)
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          install_components: 'beta,terraform-tools'
+
+      # 4. Run the Checks
+      - name: Run Inspector
+        run: |
+          terraform init
+          terraform plan -out=test.tfplan
+          terraform show -json test.tfplan > test.json
+          gcloud beta terraform vet test.json --policy-library=.
