@@ -8,3 +8,9 @@
 # MacOS
 .DS_Store
 node_modules/
+
+# Ignore Terraform binary folders
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
