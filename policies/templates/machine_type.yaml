@@ -12,15 +12,42 @@ spec:
           properties:
             mode:
               type: string
+              enum: [allowlist, denylist]
             machine_types:
               type: array
+              items:             # <--- This was the missing piece!
+                type: string     # <--- We must define what goes in the list.
   targets:
     - target: validation.gcp.forsetisecurity.org
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        violation[{"msg": msg}] {
+        violation[{"msg": msg, "details": {"machine_type": machine_type}}] {
+          # 1. Grab the Asset
           asset := input.review.object
           asset.asset_type == "compute.googleapis.com/Instance"
-          msg := "DEBUG: I found a Compute Instance! The policy connection is working."
+
+          # 2. Extract Machine Type (Handle the URL format)
+          # Google sends it like: projects/xyz/zones/us-central1-a/machineTypes/n2-standard-16
+          full_type := asset.resource.data.machineType
+          
+          # We split the URL by "/" and grab the last chunk (n2-standard-16)
+          parts := split(full_type, "/")
+          machine_type := parts[count(parts)-1]
+
+          # 3. Check parameters
+          mode := input.parameters.mode
+          allowed_types := {t | t := input.parameters.machine_types[_]}
+
+          # 4. Check Violation
+          check_violation(mode, machine_type, allowed_types)
+          msg := sprintf("Machine type '%v' is not allowed by policy.", [machine_type])
+        }
+
+        check_violation("allowlist", type, allowed) {
+          not allowed[type]
+        }
+
+        check_violation("denylist", type, allowed) {
+          allowed[type]
         }
