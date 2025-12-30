@@ -12,42 +12,15 @@ spec:
           properties:
             mode:
               type: string
-              enum: [allowlist, denylist]
             machine_types:
               type: array
-              items:
-                type: string
   targets:
     - target: validation.gcp.forsetisecurity.org
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        violation[{"msg": msg, "details": {"machine_type": machine_type}}] {
+        violation[{"msg": msg}] {
           asset := input.review.object
           asset.asset_type == "compute.googleapis.com/Instance"
-          
-          # Google stores machine type as a URL (e.g., .../zones/us-central1-a/machineTypes/e2-micro)
-          # We need to grab just the last part.
-          full_type := asset.resource.data.machineType
-          machine_type := get_basename(full_type)
-          
-          mode := input.parameters.mode
-          allowed_types := {t | t := input.parameters.machine_types[_]}
-          
-          check_violation(mode, machine_type, allowed_types)
-          msg := sprintf("Machine type '%v' is not allowed by policy.", [machine_type])
-        }
-
-        # Helper to get the last part of the URL
-        get_basename(path) = name {
-            parts := split(path, "/")
-            name := parts[count(parts)-1]
-        }
-
-        check_violation("allowlist", type, allowed) {
-          not allowed[type]
-        }
-
-        check_violation("denylist", type, allowed) {
-          allowed[type]
+          msg := "DEBUG: I found a Compute Instance! The policy connection is working."
         }
