@@ -1,0 +1,14 @@
+apiVersion: constraints.gatekeeper.sh/v1alpha1
+kind: GCPComputeInstanceMachineTypeV1
+metadata:
+  name: allow_budget_friendly_machines
+  annotations:
+    description: Only allows small, cheap machine types to prevent high costs.
+spec:
+  severity: high
+  parameters:
+    mode: allowlist
+    machine_types:
+    - e2-micro
+    - e2-small
+    - f1-micro

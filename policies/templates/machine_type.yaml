@@ -1,0 +1,43 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: gcpcomputeinstancemachinetypev1
+spec:
+  crd:
+    spec:
+      names:
+        kind: GCPComputeInstanceMachineTypeV1
+      validation:
+        openAPIV3Schema:
+          properties:
+            mode:
+              type: string
+              enum: [allowlist, denylist]
+            machine_types:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: validation.gcp.forsetisecurity.org
+      rego: |
+        package templates.gcp.GCPComputeInstanceMachineTypeV1
+
+        violation[{"msg": msg, "details": {"machine_type": machine_type}}] {
+          resource := input.review.object
+          resource.kind == "google_compute_instance"
+          machine_type := resource.machine_type
+          
+          mode := input.parameters.mode
+          allowed_types := {t | t := input.parameters.machine_types[_]}
+          
+          check_violation(mode, machine_type, allowed_types)
+          msg := sprintf("Machine type '%v' is not allowed by policy.", [machine_type])
+        }
+
+        check_violation("allowlist", type, allowed) {
+          not allowed[type]
+        }
+
+        check_violation("denylist", type, allowed) {
+          allowed[type]
+        }
