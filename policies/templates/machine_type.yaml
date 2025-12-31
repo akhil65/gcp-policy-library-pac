@@ -21,18 +21,16 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # DATA DUMP RULE (Fixed)
+        # MANHUNT RULE: Ignore the type. Find the name.
         violation[{"msg": msg}] {
           asset := input.review.object
-          asset.asset_type == "compute.googleapis.com/Instance"
+          
+          # Check if the name contains our server name
+          contains(asset.name, "budget-breaker")
 
-          # 1. Grab the resource block safely
-          # (Renamed variable 'data' to 'res' to avoid syntax error)
+          # Print the Type and the Keys so we can finally see the truth
           res := object.get(asset, "resource", {})
+          data := object.get(res, "data", {})
           
-          # 2. Grab the inner data properties
-          props := object.get(res, "data", {})
-          
-          # 3. Print the available keys so we can see if it is "machineType" or "machine_type"
-          msg := sprintf("DEBUG: Found Instance! Keys are: %v", [object.keys(props)])
+          msg := sprintf("GOTCHA! Type is: '%v'. Data keys are: %v", [asset.asset_type, object.keys(data)])
         }
