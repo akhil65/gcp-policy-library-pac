@@ -21,13 +21,17 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # SPY RULE: Fires on everything and prints the name
+        # DATA DUMP RULE
         violation[{"msg": msg}] {
           asset := input.review.object
+          asset.asset_type == "compute.googleapis.com/Instance"
+
+          # We found the instance. Now let's try to grab the data safely.
+          # We use object.get() so it doesn't crash if the field is missing.
+          data := object.get(asset, "resource", {})
+          inner_data := object.get(data, "data", {})
           
-          # We force it to fail so we can see the output in the logs
-          true
-          
-          # Print the exact name the tool is using
-          msg := sprintf("SPY REPORT: I see an asset with type: '%v'", [asset.asset_type])
+          # This line forces a violation and prints the keys inside the data object
+          # So we can see if it's "machineType" or "machine_type"
+          msg := sprintf("DEBUG: Found Instance! Data keys are: %v", [object.keys(inner_data)])
         }
