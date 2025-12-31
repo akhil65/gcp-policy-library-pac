@@ -21,17 +21,18 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # DATA DUMP RULE
+        # DATA DUMP RULE (Fixed)
         violation[{"msg": msg}] {
           asset := input.review.object
           asset.asset_type == "compute.googleapis.com/Instance"
 
-          # We found the instance. Now let's try to grab the data safely.
-          # We use object.get() so it doesn't crash if the field is missing.
-          data := object.get(asset, "resource", {})
-          inner_data := object.get(data, "data", {})
+          # 1. Grab the resource block safely
+          # (Renamed variable 'data' to 'res' to avoid syntax error)
+          res := object.get(asset, "resource", {})
           
-          # This line forces a violation and prints the keys inside the data object
-          # So we can see if it's "machineType" or "machine_type"
-          msg := sprintf("DEBUG: Found Instance! Data keys are: %v", [object.keys(inner_data)])
+          # 2. Grab the inner data properties
+          props := object.get(res, "data", {})
+          
+          # 3. Print the available keys so we can see if it is "machineType" or "machine_type"
+          msg := sprintf("DEBUG: Found Instance! Keys are: %v", [object.keys(props)])
         }
