@@ -21,16 +21,20 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # MANHUNT RULE: Ignore the type. Find the name.
+        # MANHUNT RULE (Fixed)
         violation[{"msg": msg}] {
           asset := input.review.object
           
           # Check if the name contains our server name
           contains(asset.name, "budget-breaker")
 
-          # Print the Type and the Keys so we can finally see the truth
+          # 1. Grab the resource block
           res := object.get(asset, "resource", {})
-          data := object.get(res, "data", {})
           
-          msg := sprintf("GOTCHA! Type is: '%v'. Data keys are: %v", [asset.asset_type, object.keys(data)])
+          # 2. Grab the inner data properties
+          # (Renamed variable 'data' to 'props' to fix the crash)
+          props := object.get(res, "data", {})
+          
+          # 3. Print the findings
+          msg := sprintf("GOTCHA! Type is: '%v'. Data keys are: %v", [asset.asset_type, object.keys(props)])
         }
