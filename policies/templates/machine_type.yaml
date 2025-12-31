@@ -21,12 +21,10 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # VIOLATION RULE: Fires on ANY Compute Instance
+        # CATCH-ALL RULE: Fires on EVERYTHING
         violation[{"msg": msg}] {
           asset := input.review.object
-          asset.asset_type == "compute.googleapis.com/Instance"
           
-          # We are ignoring the machine type logic for now.
-          # We just want to prove the Inspector can see the server.
-          msg := "DEBUG: I found the server! The plumbing is working."
+          # This will print the exact name the tool uses for your server
+          msg := sprintf("DEBUG: I see an asset of type: '%v'", [asset.asset_type])
         }
