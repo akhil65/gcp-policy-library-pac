@@ -12,7 +12,6 @@ spec:
           properties:
             mode:
               type: string
-              enum: [allowlist, denylist]
             machine_types:
               type: array
               items:
@@ -22,34 +21,13 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
+        # SPY RULE: Fires on everything and prints the name
         violation[{"msg": msg}] {
-          # 1. Grab the Asset
           asset := input.review.object
-          asset.asset_type == "compute.googleapis.com/Instance"
-
-          # 2. Extract Machine Type
-          # We use a helper to safely get the data
-          full_type := object.get(asset.resource.data, "machineType", "UNKNOWN")
           
-          # 3. logic to handle the URL format
-          # (Splits "projects/../machineTypes/n2-standard-16" to just "n2-standard-16")
-          parts := split(full_type, "/")
-          machine_type := parts[count(parts)-1]
-
-          # 4. Define allowed list
-          mode := input.parameters.mode
-          allowed_types := {t | t := input.parameters.machine_types[_]}
+          # We force it to fail so we can see the output in the logs
+          true
           
-          # 5. Check if it is allowed
-          check_violation(mode, machine_type, allowed_types)
-          
-          msg := sprintf("Budget Violation: Machine type '%v' is too expensive!", [machine_type])
-        }
-
-        check_violation("allowlist", type, allowed) {
-          not allowed[type]
-        }
-
-        check_violation("denylist", type, allowed) {
-          allowed[type]
+          # Print the exact name the tool is using
+          msg := sprintf("SPY REPORT: I see an asset with type: '%v'", [asset.asset_type])
         }
