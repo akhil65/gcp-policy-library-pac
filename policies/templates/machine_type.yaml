@@ -21,20 +21,21 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # MANHUNT RULE (Fixed)
+        # UNIVERSAL SPY
+        # Triggers on EVERYTHING. No if statements. No filters.
         violation[{"msg": msg}] {
-          asset := input.review.object
-          
-          # Check if the name contains our server name
-          contains(asset.name, "budget-breaker")
+          obj := input.review.object
 
-          # 1. Grab the resource block
-          res := object.get(asset, "resource", {})
+          # Capture the raw Type and Name exactly as Rego sees them
+          # We use object.get so it cannot crash even if fields are missing
+          type := object.get(obj, "asset_type", "MISSING_TYPE")
+          name := object.get(obj, "name", "MISSING_NAME")
           
-          # 2. Grab the inner data properties
-          # (Renamed variable 'data' to 'props' to fix the crash)
+          # Grab the data block to see where machineType is hiding
+          res := object.get(obj, "resource", {})
           props := object.get(res, "data", {})
-          
-          # 3. Print the findings
-          msg := sprintf("GOTCHA! Type is: '%v'. Data keys are: %v", [asset.asset_type, object.keys(props)])
+          keys := object.keys(props)
+
+          # Force the violation and dump the raw data
+          msg := sprintf("SPY REPORT: Type=[%v] Name=[%v] DataKeys=%v", [type, name, keys])
         }
