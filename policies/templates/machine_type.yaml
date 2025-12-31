@@ -21,10 +21,7 @@ spec:
       rego: |
         package templates.gcp.GCPComputeInstanceMachineTypeV1
 
-        # CATCH-ALL RULE: Fires on EVERYTHING
-        violation[{"msg": msg}] {
-          asset := input.review.object
-          
-          # This will print the exact name the tool uses for your server
-          msg := sprintf("DEBUG: I see an asset of type: '%v'", [asset.asset_type])
+        # NUCLEAR OPTION: No logic. Just fire.
+        violation[{"msg": "ALARM: The policy is definitely connected and running!"}] {
+          true
         }
